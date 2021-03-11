@@ -38,8 +38,7 @@ class Block {
     }
     getBData() {
         let bodyData = this.body; 
-        let decodedData = hex2ascii(bodyData);
-        let parsedData = JSON.parse(decodedData);
+        let parsedData = JSON.parse(hex2ascii(bodyData));
         if (parsedData && this.height > 0){
                 return parsedData;
             }
