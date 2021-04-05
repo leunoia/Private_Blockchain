@@ -43,18 +43,14 @@ class Blockchain {
                 if(height >= 0){
                     blockObject.height = height + 1;
                     blockObject.previousBlockHash = self.chain[self.height].hash;
-                    blockObject.hash = SHA256(JSON.stringify(blockObject)).toString();
-                    self.chain.push(blockObject);
-                    self.height = self.chain.length -1;
-                    resolve(blockObject);
-                }else {
-                    blockObject.height = height + 1;
-                    blockObject.hash = SHA256(JSON.stringify(blockObject)).toString();
-                    self.chain.push(blockObject);
-                    self.height = self.chain.length - 1;
-                    resolve(blockObject);
-                } 
-                
+                }
+                blockObject.height = height + 1;
+                blockObject.hash = SHA256(JSON.stringify(blockObject)).toString();
+                this.validateChain();
+                self.chain.push(blockObject);
+                self.height = self.chain.length - 1;
+                self.validateChain();
+                resolve(blockObject);
             }
         });
     }
@@ -80,7 +76,7 @@ class Blockchain {
         return new Promise(async (resolve, reject) => {
         let time = parseInt(message.split(':')[1]);
         let currentTime = parseInt(new Date().getTime().toString().slice(0, -3));
-        if ((time + (300000)) >= currentTime){
+        if ((time + (300)) >= currentTime){
             let isValid = bitcoinMessage.verify(message, address, signature)
             if (isValid){
                const block = new BlockClass.Block({ owner: address, star: star}) 
@@ -101,7 +97,7 @@ class Blockchain {
      getBlockByHash(hash) {
         let self = this;
         return new Promise((resolve, reject) => {
-            let block = self.chain.filter(block => block.hash === hash)[0];
+            let block = self.chain.find(block => block.hash === hash)[0];
             if(block){
                 resolve(block);
             } else {
@@ -156,7 +152,7 @@ class Blockchain {
                 promises.push(block.validateBlock());
                 if(block.height > 0){
                     let previousBlockHash = block.previousBlockHash;
-                    let prevHashTest = block.chain[chainIndex -1].hash
+                    let prevHashTest = self.chain[chainIndex-1].hash;
                     if(prevHashTest !== previousBlockHash){
                         errorLog.push(
                             `Error == Block Height: ${block.height} - Previous Hash does not match`
