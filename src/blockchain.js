@@ -38,21 +38,26 @@ class Blockchain {
             let blockObject = block
             let height = await self.getChainHeight();
             blockObject.time = new Date().getTime().toString().slice(0,-3);
-            if (block){
-                block.height = parseInt(self.height) + 1;
-                if(height >= 0){
-                    blockObject.height = height + 1;
-                    blockObject.previousBlockHash = self.chain[self.height].hash;
-                }
-                blockObject.height = height + 1;
-                blockObject.hash = SHA256(JSON.stringify(blockObject)).toString();
-                this.validateChain();
-                self.chain.push(blockObject);
-                self.height = self.chain.length - 1;
-                self.validateChain();
-                resolve(blockObject);
+            try{
+                await self.validateChain();
+            }catch(err){
+                reject(err)
             }
-        });
+                if (block){
+                    block.height = parseInt(self.height) + 1;
+                    if(height >= 0){
+                        blockObject.height = height + 1;
+                        blockObject.previousBlockHash = self.chain[self.height].hash;
+                    }
+                    blockObject.height = height + 1;
+                    blockObject.hash = SHA256(JSON.stringify(blockObject)).toString();
+                    this.validateChain();
+                    self.chain.push(blockObject);
+                    self.height = self.chain.length - 1;
+                    await self.validateChain();
+                    resolve(blockObject);
+                }   
+        }).catch((err) => {console.log(err); reject(err)}); 
     }
 
     /**
@@ -149,7 +154,7 @@ class Blockchain {
         return new Promise(async (resolve, reject) => {
             let promises = [];
             self.chain.forEach(block => {
-                promises.push(block.validateBlock());
+                promises.push(block.validate());
                 if(block.height > 0){
                     let previousBlockHash = block.previousBlockHash;
                     let prevHashTest = self.chain[chainIndex-1].hash;
